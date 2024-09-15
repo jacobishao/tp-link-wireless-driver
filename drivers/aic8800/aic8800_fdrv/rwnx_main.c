@@ -1054,8 +1054,8 @@ static void rwnx_csa_finish(struct work_struct *ws)
         cfg80211_disconnected(vif->ndev, 0, NULL, 0, 0, GFP_KERNEL);
         #endif
     } else {
-        mutex_lock(&vif->wdev.mtx);
-        __acquire(&vif->wdev.mtx);
+        mutex_lock(&vif->wdev.wiphy->mtx);
+        __acquire(&vif->wdev.wiphy->mtx);
         spin_lock_bh(&rwnx_hw->cb_lock);
         rwnx_chanctx_unlink(vif);
         rwnx_chanctx_link(vif, csa->ch_idx, &csa->chandef);
@@ -1073,8 +1073,8 @@ static void rwnx_csa_finish(struct work_struct *ws)
                 cfg80211_ch_switch_notify(vif->ndev, &csa->chandef);
 #endif
 
-        mutex_unlock(&vif->wdev.mtx);
-        __release(&vif->wdev.mtx);
+        mutex_unlock(&vif->wdev.wiphy->mtx);
+        __release(&vif->wdev.wiphy->mtx);
     }
     rwnx_del_csa(vif);
 }
@@ -4533,8 +4533,9 @@ static int rwnx_cfg80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
  *	interface. This should reject the call when AP mode wasn't started.
  */
 static int rwnx_cfg80211_change_beacon(struct wiphy *wiphy, struct net_device *dev,
-                                       struct cfg80211_beacon_data *info)
+                                       struct cfg80211_ap_update *update)
 {
+    struct  cfg80211_beacon_data *info = &update->beacon;
     struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
     struct rwnx_vif *vif = netdev_priv(dev);
     struct rwnx_bcn *bcn = &vif->ap.bcn;
